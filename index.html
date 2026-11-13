@@ -228,7 +228,7 @@ function vPlan(){cat="全部";
   return box
 }
 var editing=null;
-function editForm(x){var tm=field("時間","time","90px"),ti=h("input",{value:x.ti}),no=h("textarea",{value:x.no||"",placeholder:"備註（每行一點）",style:"width:100%;min-height:64px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:9px 10px"});tm.value=x.t||"";return h("div",{},h("div",{className:"row"},tm,ti),h("div",{className:"row"},no),h("div",{className:"row",style:"margin:0"},h("button",{textContent:"儲存",on:{click:function(){x.t=nt(tm.value);x.ti=ti.value.trim()||x.ti;x.no=no.value.trim();editing=null;save();draw()}}}),h("button",{className:"ab",textContent:"取消",on:{click:function(){editing=null;draw()}}})))}
+function editForm(x){var tm=field("時間","time","90px"),ti=h("input",{value:x.ti}),no=h("textarea",{value:x.no||"",placeholder:"備註（每行一點）",style:"width:100%;min-height:64px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:9px 10px"});tm.value=x.t||"";var tr=x.tr=x.tr||{m:"地鐵",min:""},tmode=h("select",{style:"flex:0 0 90px",on:{change:function(e){tr.m=e.target.value;save()}}}),tmin=h("input",{type:"number",placeholder:"分鐘",value:tr.min||"",style:"flex:0 0 80px",on:{change:function(e){tr.min=e.target.value;save()}}});["地鐵","步行","公車","計程車","其他"].forEach(function(m){tmode.append(h("option",{},m))});tmode.value=tr.m||"地鐵";return h("div",{},h("div",{className:"row"},tm,ti),h("div",{className:"row"},no),h("div",{className:"row",style:"align-items:center"},h("span",{className:"mu"},"到下一站："),tmode,tmin,h("span",{className:"mu"},"分鐘")),h("div",{className:"row",style:"margin:0"},h("button",{textContent:"儲存",on:{click:function(){x.t=nt(tm.value);x.ti=ti.value.trim()||x.ti;x.no=no.value.trim();editing=null;save();draw()}}}),h("button",{className:"ab",textContent:"取消",on:{click:function(){editing=null;draw()}}})))}
 function stores(x){var a=x.ck||[];if(a.length&&!a[0].it){a=[{id:uid(),n:"購買項目",it:a}];x.ck=a;save()}x.ck=x.ck||[];return x.ck}
 function ckc2(x){var a=stores(x),t=0,d=0;a.forEach(function(s){s.it.forEach(function(c){t++;if(c.k)d++})});return t?" "+d+"/"+t:""}
 function ckPanel2(x){
@@ -381,21 +381,20 @@ function conn(x,nx){
   ["地鐵","步行","公車","計程車","其他"].forEach(function(m){md.append(h("option",{},m))});md.value=tr.m||"地鐵";
   var mode={"地鐵":"transit","公車":"transit","步行":"walking","計程車":"driving","其他":"transit"}[md.value],ic={"地鐵":"🚇","步行":"🚶","公車":"🚌","計程車":"🚕","其他":"➡️"}[md.value];
   var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(x.ti)+"&destination="+encodeURIComponent(nx.ti)+"&travelmode="+mode;
-  var kids=[h("span",{},"往「"+nx.ti+"」")];
-  if(RO){if(tr.min)kids.push(h("span",{style:"font-weight:700;color:var(--tx)"},ic+" 約"+tr.min+"分"))}else kids.push(md,mn,h("span",{},"分"));
-  kids.push(h("a",{href:url,target:"_blank",rel:"noopener noreferrer",textContent:"🗺",title:"查路線",style:"color:var(--ac);font-weight:700;text-decoration:none"}));
+  if(!tr.min)return null;
+  var kids=[h("span",{style:"font-weight:700;color:var(--tx)"},ic+" 約"+tr.min+"分")];
   return h.apply(null,["div",{className:"conn",style:"display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:8px 4px 0;color:var(--mu);font-size:13px"}].concat(kids))
 }
 function stayFor(k){var a=(S.stay||[]).filter(function(s){return s.ad||s.t||s.url});if(!a.length)return null;var m=a.filter(function(s){return s.in&&s.in<=k&&(!s.out||k<=s.out)})[0];return m||a[0]}
 var LODGE_URL="https://maps.app.goo.gl/z6tf3W7FNYBKCgFs9";
-function depRow2(items,d){if(!items.length)return null;return h("div",{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px 62px;color:var(--mu);font-size:13px"},h("span",{},"🏨 從住宿出發，往「"+items[0].ti+"」"),h("a",{href:LODGE_URL,target:"_blank",rel:"noopener noreferrer",textContent:"🗺",title:"查路線",style:"color:var(--ac);font-weight:700;text-decoration:none"}))}
+function depRow2(items,d){if(!items.length)return null;return h("div",{style:"display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px 62px;color:var(--mu);font-size:13px"},h("span",{},"🏨 從住宿出發，往「"+items[0].ti+"」"),null)}
 function depRow(items,d){
   if(!items.length)return null;
   var s=stayFor(d[0]),sty="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px 62px;color:var(--mu);font-size:13px";
   if(!s)return RO?null:h("div",{style:sty},"🏨 到「資訊」分頁填入住宿地址，這裡就會出現出發路線。");
   var url="https://www.google.com/maps/dir/?api=1&origin="+encodeURIComponent(s.ad||s.t)+"&destination="+encodeURIComponent(items[0].ti)+"&travelmode=transit";
   var mu=/^https?:\/\//i.test(s.url||"")?s.url:"",ls="color:var(--ac);font-weight:700;text-decoration:none";
-  return h("div",{style:sty},h("span",{},"🏨 從住宿出發，往「"+items[0].ti+"」"),(s.ad||s.t)?h("a",{href:url,target:"_blank",rel:"noopener noreferrer",textContent:"🗺",title:"查路線",style:ls}):null,mu?h("a",{href:mu,target:"_blank",rel:"noopener noreferrer",textContent:"📍 住宿位置",style:ls}):null)
+  return h("div",{style:sty},h("span",{},"🏨 從住宿出發，往「"+items[0].ti+"」"),mu?h("a",{href:mu,target:"_blank",rel:"noopener noreferrer",textContent:"📍 住宿位置",style:ls}):null)
 }
 function tline(items,d){
   var w=h("div",{className:"tl"}),m=/^\d{4}-(\d\d)-(\d\d)$/.exec(d[0]),zh={SUN:"日",MON:"一",TUE:"二",WED:"三",THU:"四",FRI:"五",SAT:"六"};
